@@ -1,0 +1,20 @@
+#game {
+	width: 840px;
+	height: 840px;
+	padding: 20px;
+}
+
+.row {
+	height: 200px;
+	width: 800px;
+}
+
+.cell {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+    height: 200px;
+    width: 200px;
+	border: 1px solid black;
+	box-sizing: border-box;
+}

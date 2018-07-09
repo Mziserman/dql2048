@@ -1,3 +1,4 @@
+// import * as tf from '@tensorlowjs/tfjs';
 
 class Cell {
   constructor(config) {
@@ -18,6 +19,7 @@ class Game {
   init(config) {
     this.width = config.width;
     let board = [];
+    this.$game = document.getElementById('game');
 
     this.score = 0;
 
@@ -32,12 +34,30 @@ class Game {
     }
 
     this.board = board;
-    this.startGame()
+    this.startGame();
   }
   startGame() {
     for (let i = 0; i < 3; i++) {
       this.addOneCell();
     }
+    this.printHtml();
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    document.addEventListener('keydown', function(e) {
+      e.preventDefault();
+      if (e.keyCode === 37) {
+        this.takeTurn("left");
+      } else if (e.keyCode === 38) {
+        this.takeTurn("top");
+      } else if (e.keyCode === 39) {
+        this.takeTurn("right");
+      } else if (e.keyCode === 40) {
+        this.takeTurn("bottom");
+      }
+    }.bind(this));
+
   }
 
   addOneCell() {
@@ -58,6 +78,7 @@ class Game {
   }
 
   top() {
+    let didSomething = false
     for (let i = 0; i < this.width; i++) {
       let previousMaxSpot = this.board[i][0];
 
@@ -70,12 +91,14 @@ class Game {
           previousMaxSpot.value = this.board[i][j].value * 2;
           this.board[i][j].value = undefined;
           previousMaxSpot = this.board[previousMaxSpot.i][previousMaxSpot.j + 1];
+          didSomething = true;
           continue
         }
 
         if (previousMaxSpot.value === undefined) {
           this.board[i][previousMaxSpot.j].value = this.board[i][j].value;
           this.board[i][j].value = undefined;
+          didSomething = true;
           continue
         }
 
@@ -83,15 +106,20 @@ class Game {
           previousMaxSpot = this.board[i][previousMaxSpot.j + 1];
           previousMaxSpot.value = this.board[i][j].value;
           this.board[i][j].value = undefined;
+          didSomething = true;
           continue
         }
 
         previousMaxSpot = this.board[i][j];
       }
     }
+
+    return didSomething;
   }
 
   bottom() {
+    let didSomething = false;
+
     for (let i = 0; i < this.width; i++) {
       let previousMaxSpot = this.board[i][this.width - 1];
 
@@ -104,12 +132,14 @@ class Game {
           previousMaxSpot.value = this.board[i][j].value * 2;
           this.board[i][j].value = undefined;
           previousMaxSpot = this.board[previousMaxSpot.i][previousMaxSpot.j - 1];
+          didSomething = true;
           continue
         }
 
         if (previousMaxSpot.value === undefined) {
           this.board[i][previousMaxSpot.j].value = this.board[i][j].value;
           this.board[i][j].value = undefined;
+          didSomething = true;
           continue
         }
 
@@ -117,15 +147,19 @@ class Game {
           previousMaxSpot = this.board[i][previousMaxSpot.j - 1];
           previousMaxSpot.value = this.board[i][j].value;
           this.board[i][j].value = undefined;
+          didSomething = true;
           continue
         }
 
         previousMaxSpot = this.board[i][j];
       }
     }
+    return didSomething;
   }
 
   left() {
+    let didSomething = false;
+
     for (let j = 0; j < this.width; j++) {
       let previousMaxSpot = this.board[0][j];
 
@@ -138,12 +172,14 @@ class Game {
           previousMaxSpot.value = this.board[i][j].value * 2;
           this.board[i][j].value = undefined;
           previousMaxSpot = this.board[previousMaxSpot.i + 1][j];
+          didSomething = true;
           continue
         }
 
         if (previousMaxSpot.value === undefined) {
           this.board[previousMaxSpot.i][j].value = this.board[i][j].value;
           this.board[i][j].value = undefined;
+          didSomething = true;
           continue
         }
 
@@ -151,15 +187,19 @@ class Game {
           previousMaxSpot = this.board[previousMaxSpot.i + 1][j];
           previousMaxSpot.value = this.board[i][j].value;
           this.board[i][j].value = undefined;
+          didSomething = true;
           continue
         }
 
         previousMaxSpot = this.board[i][j];
       }
     }
+    return didSomething;
   }
 
   right() {
+    let didSomething = false;
+
     for (let j = 0; j < this.width; j++) {
       let previousMaxSpot = this.board[this.width - 1][j];
 
@@ -172,12 +212,14 @@ class Game {
           previousMaxSpot.value = this.board[i][j].value * 2;
           this.board[i][j].value = undefined;
           previousMaxSpot = this.board[previousMaxSpot.i - 1][j];
+          didSomething = true;
           continue
         }
 
         if (previousMaxSpot.value === undefined) {
           this.board[previousMaxSpot.i][j].value = this.board[i][j].value;
           this.board[i][j].value = undefined;
+          didSomething = true;
           continue
         }
 
@@ -185,13 +227,14 @@ class Game {
           previousMaxSpot = this.board[previousMaxSpot.i - 1][j];
           previousMaxSpot.value = this.board[i][j].value;
           this.board[i][j].value = undefined;
+          didSomething = true;
           continue
         }
 
         previousMaxSpot = this.board[i][j];
       }
     }
-
+    return didSomething;
   }
 
   getScore() {
@@ -233,6 +276,50 @@ class Game {
     return string;
   }
 
+  printHtml() {
+    while (this.$game.firstChild) {
+      this.$game.removeChild(this.$game.firstChild)
+    }
+    let div = document.createElement('div');
+    div.classList.add("row")
+    let row = this.$game.appendChild(div);
+    this.iterateOnBoard((i, j) => {
+      div = document.createElement('div');
+      div.classList.add("cell")
+      div.style.background = this.getBackground(this.board[i][j]);
+      this.board[i][j].$cell = row.appendChild(div);
+      this.board[i][j].$cell.innerHTML = `<span>${this.board[i][j].value ? this.board[i][j].value : 0}</span>`;
+    }, () => {
+      div = document.createElement('div');
+      div.classList.add("row")
+      row = this.$game.appendChild(div)
+    }, true)
+    row.innerHTML = this.score;
+
+  }
+
+  getBackground(cell) {
+    return {
+      2: "#eee4da",
+      4: "#ede0c8",
+      8: "#f2b179",
+      16: "#f59563",
+      32: "#f67c5f",
+      64: "#f65e3b",
+      128: "#edcf72",
+    }[cell.value]
+  }
+
+  getBoard() {
+    let board = []
+    for (let i = 0; i < this.width; i++) {
+      for (let j = 0; j < this.width; j++) {
+        board.push(this.board[i][j].value || 0)
+      }
+    }
+    return board;
+  }
+
   startTurn() {
 
   }
@@ -243,19 +330,70 @@ class Game {
 
   takeTurn(direction) {
     this.startTurn();
+    let didSomething;
     if (direction == "top")
-      this.top();
+      didSomething = this.top();
     else if (direction == "bottom")
-      this.bottom();
+      didSomething = this.bottom();
     else if (direction == "right")
-      this.right();
+      didSomething = this.right();
     else if (direction == "left")
-      this.left()
-    this.endTurn()
-    console.log(this.print())
+      didSomething = this.left();
+    if (didSomething) {
+      this.endTurn();
+      this.getScore();
+      this.printHtml();
+    }
+    let emptyCells = this.getEmptyCells();
+    if (emptyCells.length == 0){
+      return "lost"
+    }
+    return this.score;
   }
-
-
 
 }
 g=new Game({width: 4});
+
+const model = tf.sequential();
+model.add(tf.layers.dense({units: 10, inputShape: [16]}));
+
+model.add(tf.layers.dense({
+  units: 4,
+  kernelInitializer: 'VarianceScaling',
+  activation: 'softmax'
+}));
+
+const LEARNING_RATE = 0.15;
+const optimizer = tf.train.sgd(LEARNING_RATE);
+
+model.compile({
+  optimizer: optimizer,
+  loss: 'categoricalCrossentropy',
+  metrics: ['accuracy'],
+});
+
+
+let directions = ["left", "right", "top", "bottom"]
+let turn = ""
+
+function train() {
+  do {
+    let board = tf.tensor2d([g.getBoard()])
+    let pred = tf.tidy(() => {
+      return model.predict(board)
+    });
+    console.log(Array.from(pred.argMax(1).dataSync())[0])
+    turn = g.takeTurn(directions[Array.from(pred.argMax(1).dataSync())[0]])
+  } while (turn !== "lost") {
+    board = tf.tensor2d([g.getBoard()])
+    pred = tf.tidy(() => {
+      return model.predict(board)
+    });
+    console.log(Array.from(pred.argMax(1).dataSync())[0])
+    turn = g.takeTurn(directions[Array.from(pred.argMax(1).dataSync())[0]])
+  }
+}
+// prediction = model.predict(board)
+// while (g.takeTurn() !== "lost") {
+
+// }
