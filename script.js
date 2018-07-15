@@ -1,5 +1,3 @@
-// import * as tf from '@tensorlowjs/tfjs';
-
 class Cell {
   constructor(config) {
     this.init(config);
@@ -10,7 +8,34 @@ class Cell {
     this.j = config.j;
     this.value = config.value;
   }
-}
+
+  oneHot() {
+    let oneHot = [];
+    if (this.value === undefined) {
+      for (let j = 0; j <= 17; j++) {
+        if (j == 0) {
+          oneHot.push(1)
+        } else {
+          oneHot.push(0)
+        }
+      }
+      return oneHot;
+    }
+
+    for (let i = 17; i >= 0; i--) {
+      if (Math.pow(this.value, 1/i) == 2) {
+        for (let j = 0; j <= 17; j++) {
+          if (j == i) {
+            oneHot.push(1)
+          } else {
+            oneHot.push(0)
+          }
+        }
+        return oneHot
+      }
+    }
+  }
+ }
 class Game {
   constructor(config) {
     this.init(config);
@@ -34,10 +59,11 @@ class Game {
     }
 
     this.board = board;
+    this.lost = false;
     this.startGame();
   }
   startGame() {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       this.addOneCell();
     }
     this.printHtml();
@@ -88,24 +114,21 @@ class Game {
         }
 
         if (this.board[i][j].value == previousMaxSpot.value) {
-          previousMaxSpot.value = this.board[i][j].value * 2;
-          this.board[i][j].value = undefined;
+          this.merge(this.board[i][j], previousMaxSpot);
           previousMaxSpot = this.board[previousMaxSpot.i][previousMaxSpot.j + 1];
           didSomething = true;
           continue
         }
 
         if (previousMaxSpot.value === undefined) {
-          this.board[i][previousMaxSpot.j].value = this.board[i][j].value;
-          this.board[i][j].value = undefined;
+          this.move(this.board[i][j], this.board[i][previousMaxSpot.j])
           didSomething = true;
           continue
         }
 
         if (j !== previousMaxSpot.j + 1) {
+          this.move(this.board[i][j], this.board[i][previousMaxSpot.j + 1])
           previousMaxSpot = this.board[i][previousMaxSpot.j + 1];
-          previousMaxSpot.value = this.board[i][j].value;
-          this.board[i][j].value = undefined;
           didSomething = true;
           continue
         }
@@ -115,6 +138,16 @@ class Game {
     }
 
     return didSomething;
+  }
+
+  merge(cell, into) {
+    into.value = cell.value * 2;
+    cell.value = undefined;
+  }
+
+  move(cell, into) {
+    into.value = cell.value;
+    cell.value = undefined;
   }
 
   bottom() {
@@ -129,24 +162,21 @@ class Game {
         }
 
         if (this.board[i][j].value == previousMaxSpot.value) {
-          previousMaxSpot.value = this.board[i][j].value * 2;
-          this.board[i][j].value = undefined;
+          this.merge(this.board[i][j], previousMaxSpot)
           previousMaxSpot = this.board[previousMaxSpot.i][previousMaxSpot.j - 1];
           didSomething = true;
           continue
         }
 
         if (previousMaxSpot.value === undefined) {
-          this.board[i][previousMaxSpot.j].value = this.board[i][j].value;
-          this.board[i][j].value = undefined;
+          this.move(this.board[i][j], this.board[i][previousMaxSpot.j])
           didSomething = true;
           continue
         }
 
         if (j !== previousMaxSpot.j - 1) {
+          this.move(this.board[i][j], this.board[i][previousMaxSpot.j - 1])
           previousMaxSpot = this.board[i][previousMaxSpot.j - 1];
-          previousMaxSpot.value = this.board[i][j].value;
-          this.board[i][j].value = undefined;
           didSomething = true;
           continue
         }
@@ -169,24 +199,21 @@ class Game {
         }
 
         if (this.board[i][j].value == previousMaxSpot.value) {
-          previousMaxSpot.value = this.board[i][j].value * 2;
-          this.board[i][j].value = undefined;
+          this.merge(this.board[i][j], previousMaxSpot);
           previousMaxSpot = this.board[previousMaxSpot.i + 1][j];
           didSomething = true;
           continue
         }
 
         if (previousMaxSpot.value === undefined) {
-          this.board[previousMaxSpot.i][j].value = this.board[i][j].value;
-          this.board[i][j].value = undefined;
+          this.move(this.board[i][j], this.board[previousMaxSpot.i][j]);
           didSomething = true;
           continue
         }
 
         if (i !== previousMaxSpot.i + 1) {
+          this.move(this.board[i][j], this.board[previousMaxSpot.i + 1][j])
           previousMaxSpot = this.board[previousMaxSpot.i + 1][j];
-          previousMaxSpot.value = this.board[i][j].value;
-          this.board[i][j].value = undefined;
           didSomething = true;
           continue
         }
@@ -209,24 +236,21 @@ class Game {
         }
 
         if (this.board[i][j].value == previousMaxSpot.value) {
-          previousMaxSpot.value = this.board[i][j].value * 2;
-          this.board[i][j].value = undefined;
+          this.merge(this.board[i][j], previousMaxSpot);
           previousMaxSpot = this.board[previousMaxSpot.i - 1][j];
           didSomething = true;
           continue
         }
 
         if (previousMaxSpot.value === undefined) {
-          this.board[previousMaxSpot.i][j].value = this.board[i][j].value;
-          this.board[i][j].value = undefined;
+          this.move(this.board[i][j], this.board[previousMaxSpot.i][j]);
           didSomething = true;
           continue
         }
 
         if (i !== previousMaxSpot.i - 1) {
+          this.move(this.board[i][j], this.board[previousMaxSpot.i - 1][j]);
           previousMaxSpot = this.board[previousMaxSpot.i - 1][j];
-          previousMaxSpot.value = this.board[i][j].value;
-          this.board[i][j].value = undefined;
           didSomething = true;
           continue
         }
@@ -241,7 +265,7 @@ class Game {
     let score = 0;
     this.iterateOnBoard((i, j) => {
       if (this.board[i][j].value !== undefined) {
-        score += this.board[i][j].value**2
+        score += this.board[i][j].value*2
       }
     })
     this.score = score;
@@ -263,6 +287,17 @@ class Game {
         }
       }
     }
+  }
+
+  hasLost() {
+    for (let i = 0; i < this.width; i++) {
+      for (let j = 0; j < this.width; j++) {
+        if (!this.board[i][j].value || (this.board[i + 1] && this.board[i][j].value == this.board[i + 1][j].value) || (this.board[i][j + 1] && this.board[i][j].value == this.board[i][j + 1].value)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   print() {
@@ -314,7 +349,7 @@ class Game {
     let board = []
     for (let i = 0; i < this.width; i++) {
       for (let j = 0; j < this.width; j++) {
-        board.push(this.board[i][j].value || 0)
+        board.push(this.board[i][j].oneHot())
       }
     }
     return board;
@@ -331,69 +366,56 @@ class Game {
   takeTurn(direction) {
     this.startTurn();
     let didSomething;
-    if (direction == "top")
+    if (direction == "top") {
       didSomething = this.top();
-    else if (direction == "bottom")
+    } else if (direction == "bottom") {
       didSomething = this.bottom();
-    else if (direction == "right")
+    } else if (direction == "right") {
       didSomething = this.right();
-    else if (direction == "left")
+    } else if (direction == "left") {
       didSomething = this.left();
+    }
+
     if (didSomething) {
       this.endTurn();
       this.getScore();
       this.printHtml();
     }
+
     let emptyCells = this.getEmptyCells();
-    if (emptyCells.length == 0){
-      return "lost"
+    if (this.hasLost()){
+      this.lost = true;
     }
-    return this.score;
-  }
-
-}
-g=new Game({width: 4});
-
-const model = tf.sequential();
-model.add(tf.layers.dense({units: 10, inputShape: [16]}));
-
-model.add(tf.layers.dense({
-  units: 4,
-  kernelInitializer: 'VarianceScaling',
-  activation: 'softmax'
-}));
-
-const LEARNING_RATE = 0.15;
-const optimizer = tf.train.sgd(LEARNING_RATE);
-
-model.compile({
-  optimizer: optimizer,
-  loss: 'categoricalCrossentropy',
-  metrics: ['accuracy'],
-});
-
-
-let directions = ["left", "right", "top", "bottom"]
-let turn = ""
-
-function train() {
-  do {
-    let board = tf.tensor2d([g.getBoard()])
-    let pred = tf.tidy(() => {
-      return model.predict(board)
-    });
-    console.log(Array.from(pred.argMax(1).dataSync())[0])
-    turn = g.takeTurn(directions[Array.from(pred.argMax(1).dataSync())[0]])
-  } while (turn !== "lost") {
-    board = tf.tensor2d([g.getBoard()])
-    pred = tf.tidy(() => {
-      return model.predict(board)
-    });
-    console.log(Array.from(pred.argMax(1).dataSync())[0])
-    turn = g.takeTurn(directions[Array.from(pred.argMax(1).dataSync())[0]])
+    return this;
   }
 }
-// prediction = model.predict(board)
-// while (g.takeTurn() !== "lost") {
 
-// }
+var directions = ["left", "right", "top", "bottom"];
+let turn = "";
+let score = 0;
+
+let baseLine = 4;
+let history = [];
+let direction = "";
+let globalHistory = [];
+let lastScore;
+let reward;
+
+function train(time) {
+  for (let i = 0; i < time; i++) {
+    g = new Game({width: 4});
+    lastScore = g.score;
+    history = [];
+    do {
+      direction = directions[Math.floor(Math.random() * 4)];
+      turn = g.takeTurn(direction);
+      history.push([direction, turn.getBoard()]);
+      reward = turn.score - lastScore - baseLine
+      addReward(reward, history);
+      lastScore = turn.score;
+    } while (!turn.lost);
+    addReward(-50, history);
+    globalHistory.push(history);
+  }
+}
+
