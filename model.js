@@ -1,73 +1,27 @@
-const model = tf.sequential();
+const modelFitConfig = {
+    epochs: 1,
+    stepsPerEpoch: 16
+};
 
-model.add(tf.layers.conv1d({
-  activation: 'relu',
-  kernelSize: 2,
-  filters: 8,
-  inputShape: [16, 18]
-}));
-model.add(tf.layers.flatten());
-model.add(tf.layers.dense({units: 16, activation: 'sigmoid'}));
+const numActions = 4;
+const inputSize = 288;
+const temporalWindow = 1;
 
-model.add(tf.layers.dense({
-  units: 4,
-  activation: 'linear'
-}));
+const totalInputSize = inputSize * temporalWindow + numActions * temporalWindow + inputSize;
 
-let actions = ["left", "right", "top", "bottom"];
+const network = new ReImprove.NeuralNetwork();
+network.InputShape = [totalInputSize];
+network.addNeuralNetworkLayers([
+    {type: 'dense', units: 32, activation: 'relu'},
+    {type: 'dense', units: numActions, activation: 'softmax'}
+]);
 
-// let crossEntropies = tf.losses.softmaxCrossEntropy({one_hot_label: tf.oneHot(actions, 4), logits: YLogits});
-// let loss = tf.reduceSum(rewards * crossEntropies);
+const model = new ReImprove.Model.FromNetwork(network, modelFitConfig);
+model.compile({loss: 'categoricalCrossentropy', optimizer: 'sgd'})
 
-// let optimizer = tf.train.RMSPropOptimizer({learningRate: 0.001, decay: 0.99});
-// let trainOp = optimizer.minimize(loss);
+const academy = new ReImprove.Academy();
+const teacher = academy.addTeacher({});
+const agent = academy.addAgent({});
 
-model.compile({optimizer: 'adam', loss: 'meanSquaredError'});
+academy.assignTeacherToAgent(agent, teacher);
 
-// model.fit(state, reward_value, epochs=1, verbose=0)
-
-
-
-function trainModel(times) {
-  for (let i = 0; i < times; i++) {
-    var history = []
-    var game = new Game({width: 4});
-    lastScore = game.score;
-    do {
-      var board = game.getBoard();
-      var direction;
-      if (Math.random() > 0.2) {
-        direction = model.predict(tf.tensor3d([board]));
-        debugger
-      } else {
-        direction = Math.floor(Math.random() * 4);
-      }
-      var turn = game.takeTurn(directions[direction]);
-
-      history.push([direction, turn.getBoard()]);
-      var reward = turn.score - lastScore - baseLine;
-      addReward(reward, history);
-      lastScore = turn.score;
-    } while (!turn.lost);
-    addReward(-50, history);
-    globalHistory.push(history)
-  }
-}
-
-
-function addReward(reward, history) {
-  for (let i = history.length - 1; i >= 0; i--) {
-    if (history[i][2]) {
-      history[i][2] += reward;
-    } else {
-      history[i][2] = reward;
-    }
-    reward = reward/2;
-  }
-}
-
-function trainOn(history) {
-  for (let i = 0; i < history.length; i++) {
-    model.fit(tf.tensor2d(history[1]), history[2], epochs=1, verbose=0)
-  }
-}
