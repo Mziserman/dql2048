@@ -401,21 +401,21 @@ let globalHistory = [];
 let lastScore;
 let reward;
 
-function train(time) {
-  for (let i = 0; i < time; i++) {
-    g = new Game({width: 4});
-    lastScore = g.score;
-    history = [];
-    do {
-      direction = directions[Math.floor(Math.random() * 4)];
-      turn = g.takeTurn(direction);
-      history.push([direction, turn.getBoard()]);
-      reward = turn.score - lastScore - baseLine
-      addReward(reward, history);
-      lastScore = turn.score;
-    } while (!turn.lost);
-    addReward(-50, history);
-    globalHistory.push(history);
-  }
-}
+// function train(time, discount) {
+//   for (let i = 0; i < time; i++) {
+//     g = new Game({width: 4});
+//     lastScore = g.score;
+//     history = [];
+//     do {
+//       direction = directions[Math.floor(Math.random() * 4)];
+//       turn = g.takeTurn(direction);
+//       history.push([direction, turn.getBoard()]);
+//       reward = (turn.score - lastScore - baseLine) / 4
+//       addReward(reward, history, discount);
+//       lastScore = turn.score;
+//     } while (!turn.lost);
+//     addReward(-5, history);
+//     globalHistory.push(history);
+//   }
+// }
 
